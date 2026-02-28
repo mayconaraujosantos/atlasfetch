@@ -1,0 +1,18 @@
+# HTTP e sessão
+requests>=2.31.0
+
+# Variáveis de ambiente (.env)
+python-dotenv>=1.0.0
+
+# Automação de navegador (B2C pode exigir JS/redirects)
+playwright>=1.40.0
+
+# Gmail API - automação sem senha de app (OAuth2)
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.100.0
+
+# API e banco
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+sqlalchemy>=2.0.0
+apscheduler>=3.10.0

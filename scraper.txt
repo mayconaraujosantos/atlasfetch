@@ -1,0 +1,46 @@
+scraper para o site 
+https://cliente.aguasdemanaus.com.br/home 
+usuario: 01596670207
+senha: M@!kon1616 
+
+desafios, hoje o site envia um codigo de verificacao para o email do usuario 
+
+curl 'https://api.aegea.com.br/external/agencia-virtual/app/v1/fatura/debito-totais/matricula?matricula=1103385&sequencialResponsavel=886372&zonaLigacao=1' \
+  --compressed \
+  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: en-US,en;q=0.9' \
+  -H 'Accept-Encoding: gzip, deflate, br, zstd' \
+  -H 'X-TenantID: a3bc65bb-225b-0920-e053-02a0c40a5880' \
+  -H 'Ocp-Apim-Subscription-Key: f0d0a49417c040eab2965e02579b15c2' \
+  -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IkJkN3YxMk9RRE9ZTmNLallmS09FS0FHMVY2WVdwY3Y2WHpZSEllNlREcDAiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiI3NjlmMzkyMi0wMmYzLTRhMzQtOTE0NS1kNzNlM2VjZTMwZTQiLCJpc3MiOiJodHRwczovL2FlY2xpZW50ZXMuYjJjbG9naW4uY29tLzMzYmJlMDY5LWU2NWQtNGUxOS1iYWFlLWE5ZmRlOTBkODNiNS92Mi4wLyIsImV4cCI6MTc3MjMxNzIzNiwibmJmIjoxNzcyMjgxMjM2LCJzdWIiOiJiZDkwZDQwNC1mNjRmLTQ1MmQtYmYwNi1mN2FjOTUwMjczZGUiLCJleHRlbnNpb25fQ1BGb3VDTlBKIjoiMDE1OTY2NzAyMDciLCJuYW1lIjoiTWF5Y29uIEFyYXVqbyBkb3Mgc2FudG9zIiwiZW1haWxzIjpbIm12Lm1heWNvbi5hcmF1am8uc2FudG9zQGdtYWlsLmNvbSJdLCJ0aWQiOiIzM2JiZTA2OS1lNjVkLTRlMTktYmFhZS1hOWZkZTkwZDgzYjUiLCJ0ZnAiOiJCMkNfMUFfc2lnbnVwX3NpZ25pbiIsIm5vbmNlIjoiMDE5Y2E0MmQtZWNhMC03MTI2LWEwYTQtNDcyNWM1MzJlODJmIiwic2NwIjoiQWd1YXNBUEkuUmVhZFdyaXRlIiwiYXpwIjoiYjY3M2QxMmItNmM2NS00NWI0LTljM2MtMjk5Y2M1NzRiNGY4IiwidmVyIjoiMS4wIiwiaWF0IjoxNzcyMjgxMjM2fQ.lI02-TB2Idm3sbV6Ufjv0D4uzSy0M_TRUym6L2ZF-Pi8wEL1zcqkn7vL-cBcrM6Ggesc1ZmZlrRITlRXFnutohUMNqk3rk4RVg_RipfF0uJjr1azIJRYNw4z8h9mI7npDZ3mWraSaG7YyzRAcdeJ-VUJijW6oQI-ims2yC76HsZ9LO10B5YFgRauIIAGFThg-lsJpKZFga0KhwUbZlQE1TF2jmgu16jxRyZA5Ge38N6SrTGjesFpPZ1cqk_1Hzf4-S4ufKFa2lDVOMqc3Z35NODp2XapyL8VFe3ZtKoe8xzr7eikXARahy-G3_kCgvj6i2Ff0yfQDHCDszp7gXly9g' \
+  -H 'Origin: https://cliente.aguasdemanaus.com.br' \
+  -H 'Connection: keep-alive' \
+  -H 'Referer: https://cliente.aguasdemanaus.com.br/' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: cross-site'
+
+  curl 'https://aeclientes.b2clogin.com/aeclientes.onmicrosoft.com/B2C_1A_signup_signin/SelfAsserted?tx=StateProperties=eyJUSUQiOiIwNjgxM2IwNi1kMzE4LTRkOTEtOWYxMi1kN2RjZjdiZWY5OGMifQ&p=B2C_1A_signup_signin' \
+  --compressed \
+  -X POST \
+  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0' \
+  -H 'Accept: application/json, text/javascript, */*; q=0.01' \
+  -H 'Accept-Language: en-US,en;q=0.9' \
+  -H 'Accept-Encoding: gzip, deflate, br, zstd' \
+  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+  -H 'X-CSRF-TOKEN: Z0swWkFLQjRZbVBQdDFWTHExYVFhSUNiU2RDdXBXNXI4aEpDc2Vqb21hazc2U0YxQUtkVE5YZ3RFZzUzMmdqRkdaSEJzUUJ5aGtzMVpuSm1EU2FzOVE9PTsyMDI2LTAyLTI4VDEzOjQ0OjE4LjY4NTAxNzhaO0M4Z0lzSk5xZ25tUlRpNHVnSHJiV1E9PTt7Ik9yY2hlc3RyYXRpb25TdGVwIjoxfQ==' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Origin: https://aeclientes.b2clogin.com' \
+  -H 'Connection: keep-alive' \
+  -H 'Referer: https://aeclientes.b2clogin.com/aeclientes.onmicrosoft.com/b2c_1a_signup_signin/oauth2/v2.0/authorize?client_id=b673d12b-6c65-45b4-9c3c-299cc574b4f8&scope=https%3A%2F%2Faeclientes.onmicrosoft.com%2F769f3922-02f3-4a34-9145-d73e3ece30e4%2FAguasAPI.ReadWrite%20openid%20profile%20offline_access&redirect_uri=https%3A%2F%2Fcliente.aguasdemanaus.com.br%2Fvalidar-matricula&client-request-id=019ca47e-2c5d-7224-b35e-48b872cf696f&response_mode=fragment&response_type=code&x-client-SKU=msal.js.browser&x-client-VER=3.27.0&client_info=1&code_challenge=sABW1PovAiO9Kk7I_dBK-w0f1Q4vLM_oKPud9SXVmoE&code_challenge_method=S256&nonce=019ca47e-2c5f-7593-8bb8-78d0dd775b79&state=eyJpZCI6IjAxOWNhNDdlLTJjNWYtNzJiMy1hYjcxLTFiNzQ1OTZhZmRjMCIsIm1ldGEiOnsiaW50ZXJhY3Rpb25UeXBlIjoicmVkaXJlY3QifX0%3D' \
+  -H 'Cookie: x-ms-cpim-csrf=aFg3bnFXQy8wL1BXZExMcDM2VGd3ZW1CSEVYWUt5TjhkKyt2NDdsZXY1L3o3ZmRQQzNReWZCNkdkb0JFaFEzdm0rNGlqQWU3dG5ob1o4TlVla2p1aGc9PTsyMDI2LTAyLTI4VDEzOjQ0OjUzLjE2MzM2M1o7cVZWZlRNQ0FyRUNzN1NRemdQYmd0QT09O3siT3JjaGVzdHJhdGlvblN0ZXAiOjF9; _ga_3NWER421T6=GS2.1.s1772286259$o2$g1$t1772286316$j3$l0$h0; _ga=GA1.1.88802067.1772280487; x-ms-cpim-cache|bjubbhjtku2fetfc9775ja_0=m1.zzWNWolQUDNoOeIJ.bmT3XJTFpuZ3TaJYPk51fA==.0.U34GzfStDs7jwaaT0PHiVuN2vYvGzVuCo8WukPeh5a0PaL0e+Ua3YCqo86OqHAIS+IKyQOerDmXrdlvnscQZ0GdLXs7wusSi7xLl58BA9QIbUyXdtRn0XMwPmycgIAAqbvzr7tFOOaEwgvV7D4z/B2QCdrTK1UDAfzeEkXSMPqlbT1bSwB0qLwBjwC1EoEFWnJxUct8OOP77LGVqLaDEoGgrj3OK6NtNQgYu6DcvSaeVN/T1xI7D5/PDQgEBi882K+CLcgjcSdR8Mrjkh9Gt4n0FVvZAX8z6wTlLytPGBC35oRJGgHU1P4zpT8B7dwvUMSzec6EhM02zeWB/rAbA7aizKuK1q3bwXg8/bV1uEaDSFztkt/iNaZEeWYTapzIVy29/zmykj7CRJsYnlJ3Mb41vUtCNXdodHQ8Dwh0+Mp8fyqznUOncBlD4E9L/6IarO+7huXQGst1aVpeA2dVxKkkleO4XmUjistk2u9/hKXQEzz1o248pYQwGHmnWuyHqmc2cZ/KEwveTOBXqaJw1nYDLT4edrM1+qJdHrjbVEyQcjNZPb9xdtEEXL1B3Eu0qwnqAuZ/8gsGDkIyf2qhtFqLioHcPOwSD2MGHiXVi9bW+HDpY59Sd8CHeYFSJbZdIoMQEbtiCEtTJ7I/dAcTMudw0aWhIg7Vulc4FFhQ27w7XOS7W5A2bV20dgSvyF1wX4EYDhkYdQOy13S6wjCOPV/DBIEKf3mPgrctTQwg/H6GHr+m/lBUW428KAOaFkIj3yCy4VbxH2LgMplekdLMqavNcUj2LjoAfQT9RzAR96fTnQLvyFMatuZeUxuAnd5mgHhlzU4ULeS+RIiLR0b/ZREzEzZuyBSduNXI0jjBYV4bqR+WJymi0u6Y15n98n8Pr6rRA9t6hj7lT4Uoxr7tzvE/fyq8CdN4fixRCiUGzfxSYtnPChSuJ6X/AXh8alflvGvzF5PEJXSPZMaBTGr/mKYeEKeqAxwbnYxIrIByiJsoHMF2qxZI0bdJxdK6maDmKV1KM2htx0mVuAhWu1tUz2LEUMfgVF6+UKNFQUkBUpR1PdJqpQ278Acse6SNm+SbTH4rjlx11+CcWwKdUUj66Nw==; x-ms-cpim-trans=eyJUX0RJQyI6W3siSSI6IjA2ODEzYjA2LWQzMTgtNGQ5MS05ZjEyLWQ3ZGNmN2JlZjk4YyIsIlQiOiJhZWNsaWVudGVzLm9ubWljcm9zb2Z0LmNvbSIsIlAiOiJiMmNfMWFfc2lnbnVwX3NpZ25pbiIsIkMiOiJiNjczZDEyYi02YzY1LTQ1YjQtOWMzYy0yOTljYzU3NGI0ZjgiLCJTIjoyLCJNIjp7fSwiRCI6MCwiRSI6IiJ9XSwiQ19JRCI6IjA2ODEzYjA2LWQzMTgtNGQ5MS05ZjEyLWQ3ZGNmN2JlZjk4YyJ9' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-origin' \
+  -H 'Priority: u=0' \
+  --data-raw $'request_type=RESPONSE&signInName=015966702071&password=M%40\041kon1616'
+
+
+  titulo do email que contem o codigo de verificacao de seguranca 
+  Aegea seu código de verificação

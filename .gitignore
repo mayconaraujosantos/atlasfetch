@@ -1,0 +1,28 @@
+# Credenciais e segredos
+.env
+*.env
+!.env.example
+credentials.json
+token.json
+
+# Banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Debug (screenshots de falha)
+debug/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
