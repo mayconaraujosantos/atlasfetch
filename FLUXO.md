@@ -101,14 +101,14 @@ flowchart TB
 
 | Arquivo | Função |
 |---------|--------|
-| `main.py` | CLI: login + fetch + log |
-| `api.py` | FastAPI, endpoints, startup do scheduler |
-| `scraper.py` | Login Playwright, 2FA, API Aegea |
-| `sync_job.py` | Job de sync: login → fetch → save por referencia |
-| `scheduler.py` | APScheduler (cron) |
-| `database.py` | Modelos Consulta, Debito; SQLAlchemy |
-| `http_headers.py` | Headers humanizados (anti-bloqueio) |
-| `gmail_oauth.py` / `email_reader.py` | Leitura do código 2FA |
+| `main.py` | CLI: entry point para sync |
+| `api.py` | FastAPI: entry point, delega para atlasfetch |
+| `scheduler.py` | APScheduler (cron), usa use case |
+| `scraper.py` | Infra: Login Playwright, 2FA, API Aegea |
+| `database.py` | Infra: Modelos Consulta, Debito; SQLAlchemy |
+| `http_headers.py` | Infra: Headers humanizados (anti-bloqueio) |
+| `gmail_oauth.py` / `email_reader.py` | Infra: Leitura do código 2FA |
+| `src/atlasfetch/` | Clean Architecture: domain, application, infrastructure, api |
 
 ---
 

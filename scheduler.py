@@ -5,12 +5,17 @@ Baseado nas referências (MM/YYYY) dos débitos retornados.
 
 import logging
 import os
+import sys
+from pathlib import Path
 
 from apscheduler.schedulers.background import BackgroundScheduler
+
+# Garante que src/ esteja no path
+_src = Path(__file__).parent / "src"
+if _src.exists() and str(_src) not in sys.path:
+    sys.path.insert(0, str(_src))
 from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv
-
-from sync_job import run_sync_job
 
 load_dotenv()
 
@@ -19,10 +24,30 @@ logger = logging.getLogger(__name__)
 _scheduler: BackgroundScheduler | None = None
 
 
+def _run_sync_job() -> dict:
+    """Executa job de sincronização via use case."""
+    from atlasfetch.api.container import get_config, _create_sincronizar_debitos
+
+    config = get_config()
+    if not config["cpf"] or not config["senha"]:
+        raise ValueError("AGUAS_CPF e AGUAS_SENHA não configurados")
+    if not config["matricula"] or not config["sequencial"]:
+        raise ValueError("AGUAS_MATRICULA e AGUAS_SEQUENCIAL não configurados")
+
+    use_case = _create_sincronizar_debitos()
+    return use_case.execute(
+        cpf=config["cpf"],
+        senha=config["senha"],
+        matricula=config["matricula"],
+        sequencial=config["sequencial"],
+        zona=config["zona"],
+    )
+
+
 def _scheduled_task():
     """Tarefa executada pelo scheduler."""
     try:
-        result = run_sync_job()
+        result = _run_sync_job()
         logger.info("Scheduler: job executado com sucesso - %s", result)
     except Exception as e:
         logger.exception("Scheduler: erro ao executar job - %s", e)
@@ -104,7 +129,7 @@ def stop_scheduler():
 
 def run_now() -> dict:
     """Executa o job imediatamente (útil para testes)."""
-    return run_sync_job()
+    return _run_sync_job()
 
 
 if __name__ == "__main__":
