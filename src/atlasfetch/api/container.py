@@ -16,7 +16,7 @@ load_dotenv()
 
 
 def _create_repository():
-    from database import get_session
+    from atlasfetch.infrastructure.persistence.database import get_session
     return SqlAlchemyConsultaRepository(get_session=get_session)
 
 

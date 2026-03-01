@@ -1,5 +1,6 @@
 """
 Scraper para Águas de Manaus - login via Azure B2C e coleta de dados de faturas.
+Implementação da infraestrutura (nova arquitetura).
 """
 
 import logging
@@ -11,10 +12,10 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 
-from email_reader import fetch_verification_code
+from atlasfetch.infrastructure.external.email_reader import fetch_verification_code
 
 try:
-    from gmail_oauth import fetch_verification_code_oauth
+    from atlasfetch.infrastructure.external.gmail_oauth import fetch_verification_code_oauth
 except ImportError:
     fetch_verification_code_oauth = None
 
@@ -57,37 +58,55 @@ class ScraperResult:
     zona_ligacao: str | None = None
 
 
+def _get_project_root() -> str:
+    """Raiz do projeto (onde ficam credentials.json e token.json)."""
+    return os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
+    )
+
+
 def _get_verification_code() -> str:
     """
-    Obtém o código de verificação automaticamente (sem interação humana).
-    Ordem: Gmail API (OAuth2) > IMAP (senha de app).
+    Obtém o código de verificação automaticamente.
+    Ordem: IMAP (só .env) > Gmail OAuth (se configurado).
+    IMAP não exige setup script - apenas GMAIL_USER + GMAIL_APP_PASSWORD no .env.
     """
     codigo = None
 
-    # 1. Gmail API com OAuth2 - SEM senha de app
-    creds_path = os.path.join(os.path.dirname(__file__), "credentials.json")
-    token_path = os.path.join(os.path.dirname(__file__), "token.json")
-    if os.path.exists(creds_path) and os.path.exists(token_path) and fetch_verification_code_oauth:
-        try:
-            codigo = fetch_verification_code_oauth(max_wait_seconds=120, check_interval=3)
-        except Exception as e:
-            logger.debug("Gmail API: %s", e)
-
-    # 2. IMAP (requer GMAIL_APP_PASSWORD)
-    if not codigo and os.environ.get("GMAIL_USER") and os.environ.get("GMAIL_APP_PASSWORD"):
+    # 1. IMAP - só .env, sem script. Senha de app em: https://myaccount.google.com/apppasswords
+    if os.environ.get("GMAIL_USER") and os.environ.get("GMAIL_APP_PASSWORD"):
         try:
             codigo = fetch_verification_code(max_wait_seconds=120, check_interval=3)
-        except (ValueError, RuntimeError) as e:
-            logger.debug("IMAP: %s", e)
-
-    if not codigo:
+        except RuntimeError:
+            raise  # Erro de senha de app - mensagem já clara
+        except ValueError as e:
+            logger.warning("IMAP: %s", e)
+        if codigo:
+            return codigo
         raise RuntimeError(
-            "Automação do código de verificação falhou. "
-            "Configure: python setup_gmail_oauth.py (uma vez) ou GMAIL_APP_PASSWORD no .env. "
-            "Ver SETUP_GMAIL.md"
+            "IMAP falhou. Use SENHA DE APP (não a senha normal do Gmail): "
+            "https://myaccount.google.com/apppasswords - crie uma e coloque em GMAIL_APP_PASSWORD"
         )
 
-    return codigo
+    # 2. Gmail OAuth (banco ou arquivos - requer make setup-gmail uma vez)
+    if fetch_verification_code_oauth:
+        from atlasfetch.infrastructure.external.gmail_oauth import has_gmail_oauth_config
+
+        if has_gmail_oauth_config():
+            try:
+                codigo = fetch_verification_code_oauth(max_wait_seconds=120, check_interval=3)
+            except Exception as e:
+                logger.warning("Gmail API: %s", e)
+            if codigo:
+                return codigo
+            raise RuntimeError(
+                "Gmail OAuth não encontrou o código. Execute: make setup-gmail"
+            )
+
+    raise RuntimeError(
+        "Configure o 2FA no .env: GMAIL_USER e GMAIL_APP_PASSWORD (senha de app em "
+        "https://myaccount.google.com/apppasswords). Sem setup script."
+    )
 
 
 def _capture_token_from_request(url: str, headers: dict) -> str | None:
@@ -251,8 +270,8 @@ def login(
                 page.keyboard.press("Enter")
         else:
             # Modo descoberta: salvar HTML para identificar estrutura do modal
+            debug_dir = os.path.join(_get_project_root(), "debug")
             if os.environ.get("DEBUG_MODAL") == "1":
-                debug_dir = os.path.join(os.path.dirname(__file__), "debug")
                 os.makedirs(debug_dir, exist_ok=True)
                 html_path = os.path.join(debug_dir, "pagina_2fa.html")
                 try:
@@ -304,7 +323,7 @@ def login(
                 token_data = page.evaluate(
                     """
                     () => {
-                        const keys = Object.keys(localStorage).filter(k => 
+                        const keys = Object.keys(localStorage).filter(k =>
                             k.includes('accesstoken') || k.includes('account')
                         );
                         for (const k of keys) {
@@ -338,7 +357,7 @@ def login(
 
         if not captured_token:
             # Salvar screenshot para diagnóstico
-            debug_dir = os.path.join(os.path.dirname(__file__), "debug")
+            debug_dir = os.path.join(_get_project_root(), "debug")
             os.makedirs(debug_dir, exist_ok=True)
             screenshot_path = os.path.join(debug_dir, "erro_login.png")
             try:
@@ -391,6 +410,8 @@ def fetch_debito_totais(
     """
     import requests
 
+    from atlasfetch.infrastructure.external.http_headers import get_human_headers
+
     logger.info(
         "Buscando débito totais - matricula=%s, sequencial=%s, zona=%s",
         matricula,
@@ -403,8 +424,6 @@ def fetch_debito_totais(
         "sequencialResponsavel": sequencial_responsavel,
         "zonaLigacao": zona_ligacao,
     }
-    from http_headers import get_human_headers
-
     headers = get_human_headers(extra={
         "X-TenantID": API_TENANT_ID,
         "Ocp-Apim-Subscription-Key": API_SUBSCRIPTION_KEY,

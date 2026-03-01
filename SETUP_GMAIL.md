@@ -1,10 +1,26 @@
 # Automação do código de verificação (Gmail)
 
-**Zero interação humana.** O scraper lê o código automaticamente. Configuração única:
+**Zero interação humana.** O scraper lê o código automaticamente.
 
 ---
 
-## Opção 1: Gmail API com OAuth2 (recomendado)
+## Opção 1: IMAP (recomendado – só .env)
+
+**Sem setup script.** Apenas configurar o `.env`:
+
+1. Acesse https://myaccount.google.com/apppasswords
+2. Crie uma senha de app (ex.: "Atlasfetch")
+3. No `.env`:
+   ```
+   GMAIL_USER=seu@email.com
+   GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
+   ```
+
+Pronto. Não use a senha normal do Gmail – use a senha de app.
+
+---
+
+## Opção 2: Gmail API com OAuth2
 
 **Não requer senha de app.** Configuração única (~5 min).
 
@@ -134,7 +150,17 @@ Requer conta com 2FA e senha de app.
 
 ## Resumo
 
-| Método      | Senha de app? | Configuração |
+| Método      | Setup script? | Configuração |
 |------------|----------------|--------------|
-| Gmail API  | Não            | Uma vez (OAuth) |
-| IMAP       | Sim            | Variáveis no .env |
+| IMAP       | Não            | Só .env (GMAIL_USER + GMAIL_APP_PASSWORD) |
+| Gmail API  | Sim (make setup-gmail) | credentials.json + token.json |
+
+---
+
+## Erro: "Application-specific password required"
+
+Se você vê esse erro ao usar o scheduler ou `make run`:
+
+1. **Usando OAuth (recomendado):** Execute `make setup-gmail` e garanta que `credentials.json` e `token.json` estejam na raiz do projeto.
+2. **Remova do .env:** Se estiver usando OAuth, **não defina** `GMAIL_USER` nem `GMAIL_APP_PASSWORD`. Eles fazem o scraper tentar IMAP, que exige senha de app.
+3. **Usando IMAP:** Se preferir IMAP, crie uma senha de app em https://myaccount.google.com/apppasswords e use em `GMAIL_APP_PASSWORD` (não use a senha normal do Gmail).

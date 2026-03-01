@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1 and sys.argv[1] == "--schedule":
         # Modo daemon: inicia scheduler e fica rodando
-        from database import init_db
+        from atlasfetch.infrastructure.persistence.database import init_db
 
         init_db()
         start_scheduler()
@@ -155,7 +155,7 @@ if __name__ == "__main__":
             stop_scheduler()
     else:
         # Modo one-shot: executa uma vez
-        from database import init_db
+        from atlasfetch.infrastructure.persistence.database import init_db
 
         init_db()
         result = run_now()

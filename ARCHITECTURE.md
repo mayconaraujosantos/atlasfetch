@@ -28,11 +28,13 @@ atlasfetch/
 ├── api.py           # Entry point: uvicorn api:app
 ├── main.py          # Entry point: python main.py
 ├── scheduler.py     # Job agendado
-├── scraper.py       # Infra: login Playwright + API Aegea
-├── database.py     # Infra: modelos SQLAlchemy
-├── email_reader.py # Infra: IMAP
-├── gmail_oauth.py   # Infra: Gmail API
-└── http_headers.py # Infra: headers HTTP
+├── old/             # Código legado (infraestrutura)
+│   ├── scraper.py   # Login Playwright + API Aegea
+│   ├── database.py  # Modelos SQLAlchemy
+│   ├── email_reader.py
+│   ├── gmail_oauth.py
+│   ├── http_headers.py
+│   └── setup_gmail_oauth.py
 ```
 
 ## Camadas

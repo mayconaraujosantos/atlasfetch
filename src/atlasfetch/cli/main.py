@@ -32,6 +32,9 @@ def main() -> None:
 
     logger.info("Iniciando scraper Águas de Manaus")
 
+    from atlasfetch.infrastructure.persistence.database import init_db
+    init_db()
+
     use_case = _create_sincronizar_debitos()
     result = use_case.execute(
         cpf=config["cpf"],

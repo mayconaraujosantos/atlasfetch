@@ -35,3 +35,8 @@ class ConsultaRepositoryPort(ABC):
     def buscar_ultima_consulta(self, ano: int, mes: int) -> dict | None:
         """Busca a última consulta salva para ano/mês. Retorna None se não houver."""
         ...
+
+    @abstractmethod
+    def listar_periodos_disponiveis(self) -> list[dict]:
+        """Lista períodos (ano/mês) com faturas disponíveis. Ordenado do mais recente."""
+        ...

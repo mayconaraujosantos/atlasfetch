@@ -13,7 +13,7 @@ class AegeaDebitoClient(DebitoApiPort):
         sequencial_responsavel: str,
         zona_ligacao: str = "1",
     ) -> dict:
-        from scraper import fetch_debito_totais
+        from atlasfetch.infrastructure.external.aguas_scraper import fetch_debito_totais
 
         return fetch_debito_totais(
             access_token=access_token,

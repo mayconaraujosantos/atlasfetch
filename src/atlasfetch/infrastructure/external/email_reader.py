@@ -168,11 +168,14 @@ def fetch_verification_code(
 
             mail.logout()
         except imaplib.IMAP4.error as e:
-            logger.warning(
-                "Erro IMAP (senha de app necessária): %s - use entrada manual",
-                str(e)[:80],
-            )
-            return None  # Permite fallback para entrada manual
+            err_str = str(e).lower()
+            if "application-specific" in err_str or "app password" in err_str:
+                raise RuntimeError(
+                    "Use SENHA DE APP (não a senha normal): "
+                    "https://myaccount.google.com/apppasswords"
+                ) from e
+            logger.warning("Erro IMAP: %s", str(e)[:80])
+            return None
         except Exception as e:
             logger.debug("Erro ao verificar e-mail (tentando novamente): %s", e)
 

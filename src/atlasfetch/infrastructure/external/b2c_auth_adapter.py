@@ -8,7 +8,7 @@ class B2CAuthAdapter(AuthPort):
     """Implementa AuthPort usando Playwright e leitura de e-mail para 2FA."""
 
     def login(self, cpf: str, senha: str, *, headless: bool = True) -> AuthResult:
-        from scraper import login as _login
+        from atlasfetch.infrastructure.external.aguas_scraper import login as _login
 
         result = _login(cpf=cpf, senha=senha, headless=headless)
         return AuthResult(

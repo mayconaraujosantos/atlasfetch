@@ -30,20 +30,43 @@ class SqlAlchemyConsultaRepository(ConsultaRepositoryPort):
         sequencial: str,
         zona_ligacao: int = 1,
     ):
-        from database import Consulta, Debito
+        from atlasfetch.infrastructure.persistence.database import Consulta, Debito
 
         content = data.get("content", {})
         debitos_data = content.get("debitos", [])
 
+        # Filtrar débitos que já existem (por numero_aviso)
+        avisos = [d.get("numeroAviso") for d in debitos_data if d.get("numeroAviso")]
         session = self._get_session()
         try:
+            existing = set()
+            if avisos:
+                for row in session.query(Debito.numero_aviso).filter(
+                    Debito.numero_aviso.in_(avisos)
+                ).all():
+                    existing.add(row[0])
+            debitos_data = [d for d in debitos_data if d.get("numeroAviso") not in existing]
+
+            if not debitos_data:
+                # Todos já existem - buscar última consulta e retornar (ou None)
+                c = session.query(Consulta).filter(
+                    Consulta.ano_filtro == ano, Consulta.mes_filtro == mes
+                ).order_by(Consulta.created_at.desc()).first()
+                if c:
+                    session.refresh(c)
+                    return c
+                return None  # Nenhum dado novo, sem consulta existente
+
+            valor_total = sum(d.get("valorFatura", 0) for d in debitos_data)
+            existe_vencido = any(d.get("statusFatura") == "Atrasada" for d in debitos_data)
+
             consulta = Consulta(
                 matricula=matricula,
                 sequencial_responsavel=sequencial,
                 zona_ligacao=zona_ligacao or content.get("zonaLigacao") or 1,
-                quantidade_debitos=content.get("quantidadeDebitos", 0),
-                valor_total_debitos=content.get("valorTotalDebitos", 0),
-                existe_debito_vencido=content.get("existeDebitoVencido", False),
+                quantidade_debitos=len(debitos_data),
+                valor_total_debitos=valor_total,
+                existe_debito_vencido=existe_vencido,
                 ano_filtro=ano,
                 mes_filtro=mes,
             )
@@ -83,7 +106,7 @@ class SqlAlchemyConsultaRepository(ConsultaRepositoryPort):
         sequencial: str,
         zona_ligacao: int = 1,
     ) -> list:
-        from database import Consulta, Debito
+        from atlasfetch.infrastructure.persistence.database import Consulta, Debito
 
         content = data.get("content", {})
         debitos_data = content.get("debitos", [])
@@ -102,16 +125,29 @@ class SqlAlchemyConsultaRepository(ConsultaRepositoryPort):
         consultas_criadas = []
         try:
             for (ano, mes), debitos_grupo in sorted(grupos.items()):
-                valor_total = sum(d.get("valorFatura", 0) for d in debitos_grupo)
+                # Filtrar débitos que já existem (por numero_aviso)
+                avisos = [d.get("numeroAviso") for d in debitos_grupo if d.get("numeroAviso")]
+                existing = set()
+                if avisos:
+                    for row in session.query(Debito.numero_aviso).filter(
+                        Debito.numero_aviso.in_(avisos)
+                    ).all():
+                        existing.add(row[0])
+                debitos_novos = [d for d in debitos_grupo if d.get("numeroAviso") not in existing]
+
+                if not debitos_novos:
+                    continue  # Todos já existem, pular grupo
+
+                valor_total = sum(d.get("valorFatura", 0) for d in debitos_novos)
                 existe_vencido = any(
-                    d.get("statusFatura") == "Atrasada" for d in debitos_grupo
+                    d.get("statusFatura") == "Atrasada" for d in debitos_novos
                 )
 
                 consulta = Consulta(
                     matricula=matricula,
                     sequencial_responsavel=sequencial,
                     zona_ligacao=zona_ligacao,
-                    quantidade_debitos=len(debitos_grupo),
+                    quantidade_debitos=len(debitos_novos),
                     valor_total_debitos=valor_total,
                     existe_debito_vencido=existe_vencido,
                     ano_filtro=ano,
@@ -120,7 +156,7 @@ class SqlAlchemyConsultaRepository(ConsultaRepositoryPort):
                 session.add(consulta)
                 session.flush()
 
-                for d in debitos_grupo:
+                for d in debitos_novos:
                     debito = Debito(
                         consulta_id=consulta.id,
                         referencia=d.get("referencia", ""),
@@ -149,7 +185,7 @@ class SqlAlchemyConsultaRepository(ConsultaRepositoryPort):
             session.close()
 
     def buscar_ultima_consulta(self, ano: int, mes: int) -> dict | None:
-        from database import Consulta
+        from atlasfetch.infrastructure.persistence.database import Consulta
 
         session = self._get_session()
         try:
@@ -190,5 +226,38 @@ class SqlAlchemyConsultaRepository(ConsultaRepositoryPort):
                 "debitos": debitos,
                 "consultadoEm": c.created_at.isoformat(),
             }
+        finally:
+            session.close()
+
+    def listar_periodos_disponiveis(self) -> list[dict]:
+        """Lista períodos (ano/mês) com faturas. Ordenado do mais recente."""
+        from atlasfetch.infrastructure.persistence.database import Consulta
+
+        session = self._get_session()
+        try:
+            rows = (
+                session.query(Consulta)
+                .order_by(Consulta.ano_filtro.desc(), Consulta.mes_filtro.desc())
+                .limit(100)
+                .all()
+            )
+            seen = set()
+            result = []
+            for c in rows:
+                key = (c.ano_filtro, c.mes_filtro)
+                if key in seen:
+                    continue
+                seen.add(key)
+                result.append({
+                    "ano": c.ano_filtro,
+                    "mes": c.mes_filtro,
+                    "periodo": f"{c.mes_filtro:02d}/{c.ano_filtro}",
+                    "valorTotal": float(c.valor_total_debitos),
+                    "quantidadeDebitos": c.quantidade_debitos,
+                    "existeDebitoVencido": c.existe_debito_vencido,
+                })
+                if len(result) >= 24:
+                    break
+            return result
         finally:
             session.close()

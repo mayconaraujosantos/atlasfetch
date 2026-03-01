@@ -1,9 +1,10 @@
 """
 Gmail API com OAuth2 - leitura de e-mails SEM senha de app.
-Requer configuração única: credentials.json + autorização no navegador.
+Lê credentials e token do banco (tabela gmail_oauth_config) ou dos arquivos (fallback).
 """
 
 import base64
+import json
 import logging
 import os
 import re
@@ -20,14 +21,69 @@ CODE_PATTERN = re.compile(r"\b(\d{6})\b")
 KEYWORDS = ["aegea", "aguas", "verifica", "código", "codigo", "microsoft", "b2clogin"]
 
 
+def _get_project_root() -> str:
+    """Raiz do projeto (onde ficam credentials.json e token.json)."""
+    return os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
+    )
+
+
 def _get_credentials_path() -> str:
-    """Caminho do arquivo credentials.json."""
-    return os.path.join(os.path.dirname(__file__), "credentials.json")
+    """Caminho do arquivo credentials.json (na raiz do projeto)."""
+    return os.path.join(_get_project_root(), "credentials.json")
 
 
 def _get_token_path() -> str:
-    """Caminho do arquivo token.json (salvo após autorização)."""
-    return os.path.join(os.path.dirname(__file__), "token.json")
+    """Caminho do arquivo token.json (na raiz do projeto)."""
+    return os.path.join(_get_project_root(), "token.json")
+
+
+def _get_credentials_and_token() -> tuple[str | None, str | None]:
+    """
+    Obtém credentials_json e token_json.
+    Ordem: 1) banco, 2) arquivos.
+    """
+    try:
+        from atlasfetch.infrastructure.persistence.database import get_gmail_oauth_config
+
+        creds_db, token_db = get_gmail_oauth_config()
+        if creds_db and token_db:
+            return (creds_db, token_db)
+    except Exception as e:
+        logger.debug("Falha ao ler Gmail OAuth do banco: %s", e)
+
+    # Fallback: arquivos
+    creds_path = _get_credentials_path()
+    token_path = _get_token_path()
+    creds_json = None
+    token_json = None
+    if os.path.exists(creds_path):
+        with open(creds_path, encoding="utf-8") as f:
+            creds_json = f.read()
+    if os.path.exists(token_path):
+        with open(token_path, encoding="utf-8") as f:
+            token_json = f.read()
+    return (creds_json, token_json)
+
+
+def has_gmail_oauth_config() -> bool:
+    """Verifica se credentials e token estão disponíveis (banco ou arquivos)."""
+    creds, token = _get_credentials_and_token()
+    return bool(creds and token)
+
+
+def _save_token_to_store(token_json: str) -> None:
+    """Salva token no banco ou no arquivo."""
+    try:
+        from atlasfetch.infrastructure.persistence.database import set_gmail_oauth_config
+
+        set_gmail_oauth_config(token_json=token_json)
+        logger.debug("Token Gmail OAuth salvo no banco")
+    except Exception as e:
+        logger.debug("Falha ao salvar token no banco: %s", e)
+        token_path = _get_token_path()
+        with open(token_path, "w", encoding="utf-8") as f:
+            f.write(token_json)
 
 
 def _extract_code_from_text(text: str) -> str | None:
@@ -50,17 +106,17 @@ def fetch_verification_code_oauth(
 ) -> str | None:
     """
     Busca código de verificação via Gmail API (OAuth2).
+    Lê credentials e token do banco ou dos arquivos.
     Não requer senha de app - apenas autorização única no navegador.
 
-    Pré-requisito: executar `python setup_gmail_oauth.py` uma vez.
+    Pré-requisito: executar `make setup-gmail` uma vez.
     """
-    creds_path = _get_credentials_path()
-    token_path = _get_token_path()
+    creds_json, token_json = _get_credentials_and_token()
 
-    if not os.path.exists(creds_path):
+    if not creds_json:
         logger.error(
-            "Arquivo credentials.json não encontrado. "
-            "Execute: python setup_gmail_oauth.py"
+            "Credentials não encontrados (banco ou arquivo). "
+            "Execute: make setup-gmail"
         )
         return None
 
@@ -75,19 +131,18 @@ def fetch_verification_code_oauth(
         )
         return None
 
-    # Sem interação humana: token deve existir e ser válido
-    if not os.path.exists(token_path):
-        logger.error("token.json não encontrado. Execute: python setup_gmail_oauth.py")
+    if not token_json:
+        logger.error("Token não encontrado (banco ou arquivo). Execute: make setup-gmail")
         return None
 
-    creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+    token_data = json.loads(token_json)
+    creds = Credentials.from_authorized_user_info(token_data, SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
-            with open(token_path, "w") as f:
-                f.write(creds.to_json())
+            _save_token_to_store(creds.to_json())
         else:
-            logger.error("Token inválido. Execute: python setup_gmail_oauth.py")
+            logger.error("Token inválido. Execute: make setup-gmail")
             return None
 
     service = build("gmail", "v1", credentials=creds)
