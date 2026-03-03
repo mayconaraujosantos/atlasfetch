@@ -1,6 +1,6 @@
 # Diagrama do Banco de Dados
 
-## Modelo de Dados (PostgreSQL)
+## Modelo de Dados (SQLite / PostgreSQL)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -105,20 +105,32 @@ O scraper lê do banco primeiro; se vazio, usa os arquivos como fallback.
 - **Consulta** (1) → (N) **Débitos**: Uma consulta agrupa vários débitos por referência (ano/mês).
 - **numero_aviso** em `debitos` é usado para evitar duplicatas ao sincronizar.
 
-## Setup PostgreSQL
+## Setup SQLite (padrão)
 
-1. Crie o banco:
-   ```bash
-   createdb atlasfetch
-   # ou: psql -c "CREATE DATABASE atlasfetch;"
-   ```
+1. Nenhuma configuração extra. O arquivo `atlasfetch.db` é criado automaticamente no diretório do projeto.
 
-2. Configure no `.env`:
+2. Opcional no `.env`:
    ```
-   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/atlasfetch
+   DATABASE_URL=sqlite:///atlasfetch.db
    ```
 
 3. As tabelas são criadas automaticamente na primeira execução (API ou scheduler).
 
 4. Gmail OAuth (opcional): `make setup-gmail` salva credentials e token no banco.
    Se já tiver arquivos: `make migrate-gmail` copia para o banco.
+
+## Setup PostgreSQL (opcional, para deploy)
+
+1. Instale `psycopg2-binary` e configure no `.env`:
+   ```
+   pip install psycopg2-binary
+   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/atlasfetch
+   ```
+
+2. Crie o banco:
+   ```bash
+   createdb atlasfetch
+   # ou: make db  (Docker)
+   ```
+
+3. As tabelas são criadas automaticamente na primeira execução.

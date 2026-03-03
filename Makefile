@@ -8,25 +8,27 @@ PY = $(BIN)/python
 PIP = $(BIN)/pip
 UVICORN = $(BIN)/uvicorn
 
-.PHONY: help install venv setup api run sync scheduler setup-gmail playwright-install test clean db db-init
+.PHONY: help install venv setup api run sync scheduler setup-gmail setup-amazonas-energia migrate-gmail db-migrate-faturas-luz playwright-install test clean db db-init
 
 help:
 	@echo "Atlasfetch - Comandos disponíveis:"
 	@echo ""
-	@echo "  make setup           Cria venv e instala dependências (primeira vez)"
-	@echo "  make db              Inicia PostgreSQL (Docker) - user/pass: postgres/postgres"
-	@echo "  make db-init         Cria tabelas no banco (execute após make db)"
-	@echo "  make venv            Cria ambiente virtual .venv"
-	@echo "  make install         Instala dependências (requer venv)"
-	@echo "  make api             Inicia a API (uvicorn na porta 8000)"
-	@echo "  make run             Executa CLI (sync de faturas)"
-	@echo "  make sync            Executa job de sync uma vez"
-	@echo "  make scheduler       Inicia scheduler (config: .env SCHEDULER_ENABLED=1, SCHEDULER_CRON)"
-	@echo "  make setup-gmail     Gmail OAuth - salva no banco (opcional)"
-	@echo "  make migrate-gmail   Migra credentials/token dos arquivos para o banco"
-	@echo "  make playwright-install  Instala navegadores do Playwright"
-	@echo "  make test            Testa API via curl (requer API rodando)"
-	@echo "  make clean           Remove __pycache__, .pyc, etc."
+	@echo "  make setup                 Cria venv e instala dependências (primeira vez)"
+	@echo "  make db                    Inicia PostgreSQL (Docker) - opcional para deploy"
+	@echo "  make db-init               Cria tabelas no banco (execute após make db)"
+	@echo "  make db-migrate-faturas-luz  Adiciona UNIQUE em faturas_luz (unit_id,ano,mes)"
+	@echo "  make venv                  Cria ambiente virtual .venv"
+	@echo "  make install               Instala dependências (requer venv)"
+	@echo "  make api                   Inicia a API (uvicorn na porta 8000)"
+	@echo "  make run                   Executa CLI (sync de faturas)"
+	@echo "  make sync                  Executa job de sync uma vez"
+	@echo "  make scheduler             Inicia scheduler (água + luz, cada um com seu cron)"
+	@echo "  make setup-gmail           Gmail OAuth - salva no banco (opcional)"
+	@echo "  make setup-amazonas-energia  Token Amazonas Energia - login manual, salva no banco"
+	@echo "  make migrate-gmail         Migra credentials/token dos arquivos para o banco"
+	@echo "  make playwright-install   Instala navegadores do Playwright"
+	@echo "  make test                  Testa API via curl (requer API rodando)"
+	@echo "  make clean                 Remove __pycache__, .pyc, etc."
 	@echo ""
 
 venv:
@@ -56,15 +58,21 @@ scheduler:
 setup-gmail:
 	$(PY) scripts/setup_gmail_oauth.py
 
+setup-amazonas-energia:
+	$(PY) scripts/setup_amazonas_energia_token.py
+
 migrate-gmail:
 	$(PY) scripts/migrate_gmail_to_db.py
 
 db:
 	docker compose up -d postgres
-	@echo "PostgreSQL rodando. Banco atlasfetch criado. DATABASE_URL=postgresql://postgres:postgres@localhost:5432/atlasfetch"
+	@echo "PostgreSQL rodando (opcional). DATABASE_URL=postgresql://postgres:postgres@localhost:5432/atlasfetch"
 
 db-init:
 	$(PY) -c "import sys; sys.path.insert(0,'src'); from atlasfetch.infrastructure.persistence.database import init_db; init_db(); print('Tabelas criadas.')"
+
+db-migrate-faturas-luz:
+	$(PY) scripts/migrate_faturas_luz_unique.py
 
 playwright-install:
 	$(BIN)/playwright install chromium

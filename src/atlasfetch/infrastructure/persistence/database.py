@@ -1,8 +1,9 @@
 """
 Modelos e configuração do banco de dados.
-PostgreSQL por padrão. DATABASE_URL no .env.
+SQLite por padrão. DATABASE_URL no .env (ex.: sqlite:///atlasfetch.db).
 """
 
+import json
 import os
 from datetime import datetime
 
@@ -15,6 +16,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
@@ -23,7 +25,7 @@ load_dotenv()
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/atlasfetch",
+    "sqlite:///atlasfetch.db",
 )
 
 engine = create_engine(
@@ -104,6 +106,33 @@ class GmailOAuthConfig(Base):
     )
 
 
+class AmazonasEnergiaToken(Base):
+    """Token da API Pigz para Amazonas Energia (luz). Obtido via login manual."""
+
+    __tablename__ = "amazonas_energia_token"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    auth_header: Mapped[str] = mapped_column(Text)
+    unit_id: Mapped[str] = mapped_column(String(20))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+
+class FaturaLuz(Base):
+    """Faturas de luz (Amazonas Energia) - dados da API consumes."""
+
+    __tablename__ = "faturas_luz"
+    __table_args__ = (UniqueConstraint("unit_id", "ano", "mes", name="uq_faturas_luz_unit_ano_mes"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    unit_id: Mapped[str] = mapped_column(String(20), index=True)
+    ano: Mapped[int] = mapped_column(Integer, index=True)
+    mes: Mapped[int] = mapped_column(Integer, index=True)
+    data_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 def init_db():
     """Cria as tabelas."""
     Base.metadata.create_all(engine)
@@ -146,5 +175,114 @@ def set_gmail_oauth_config(
             if token_json is not None:
                 row.token_json = token_json
         session.commit()
+    finally:
+        session.close()
+
+
+def get_amazonas_energia_token() -> tuple[str | None, str | None]:
+    """Retorna (auth_header, unit_id) do banco. (None, None) se vazio."""
+    session = SessionLocal()
+    try:
+        row = session.query(AmazonasEnergiaToken).first()
+        if row:
+            return (row.auth_header, row.unit_id)
+        return (None, None)
+    finally:
+        session.close()
+
+
+def set_amazonas_energia_token(auth_header: str, unit_id: str = "") -> None:
+    """Salva token da Amazonas Energia no banco. unit_id pode ser vazio (usar .env)."""
+    session = SessionLocal()
+    try:
+        row = session.query(AmazonasEnergiaToken).first()
+        if not row:
+            row = AmazonasEnergiaToken(auth_header=auth_header, unit_id=unit_id or "")
+            session.add(row)
+        else:
+            row.auth_header = auth_header
+            if unit_id:
+                row.unit_id = unit_id
+        session.commit()
+    finally:
+        session.close()
+
+
+def salvar_fatura_luz(unit_id: str, ano: int, mes: int, data_json: str) -> None:
+    """Salva ou atualiza fatura de luz. Upsert por (unit_id, ano, mes)."""
+    session = SessionLocal()
+    try:
+        row = (
+            session.query(FaturaLuz)
+            .filter(
+                FaturaLuz.unit_id == unit_id,
+                FaturaLuz.ano == ano,
+                FaturaLuz.mes == mes,
+            )
+            .first()
+        )
+        if row:
+            row.data_json = data_json
+        else:
+            row = FaturaLuz(unit_id=unit_id, ano=ano, mes=mes, data_json=data_json)
+            session.add(row)
+        session.commit()
+    finally:
+        session.close()
+
+
+def buscar_fatura_luz(ano: int, mes: int) -> dict | None:
+    """Retorna fatura de luz do período. None se não existir."""
+    session = SessionLocal()
+    try:
+        row = (
+            session.query(FaturaLuz)
+            .filter(FaturaLuz.ano == ano, FaturaLuz.mes == mes)
+            .order_by(FaturaLuz.created_at.desc())
+            .first()
+        )
+        if not row:
+            return None
+        data = json.loads(row.data_json)
+        data["consultadoEm"] = row.created_at.isoformat()
+        data["periodo"] = f"{mes:02d}/{ano}"
+        data["ano"] = ano
+        data["mes"] = mes
+        return data
+    finally:
+        session.close()
+
+
+def listar_periodos_luz() -> list[dict]:
+    """Lista períodos com faturas de luz."""
+    session = SessionLocal()
+    try:
+        rows = (
+            session.query(FaturaLuz)
+            .order_by(FaturaLuz.ano.desc(), FaturaLuz.mes.desc())
+            .limit(50)
+            .all()
+        )
+        seen = set()
+        result = []
+        for r in rows:
+            key = (r.ano, r.mes)
+            if key in seen:
+                continue
+            seen.add(key)
+            try:
+                d = json.loads(r.data_json)
+                valor = d.get("valorTotal", d.get("valor", 0))
+            except Exception:
+                valor = 0
+            result.append({
+                "ano": r.ano,
+                "mes": r.mes,
+                "periodo": f"{r.mes:02d}/{r.ano}",
+                "valorTotal": float(valor),
+                "quantidadeDebitos": 1,
+                "existeDebitoVencido": False,
+            })
+        return result
     finally:
         session.close()
