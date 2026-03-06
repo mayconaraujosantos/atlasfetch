@@ -71,4 +71,35 @@ CREATE TABLE "public"."gmail_oauth_config" (
 
 -- Dados iniciais: use make run ou make sync para popular via API.
 -- Gmail OAuth: use make setup-gmail para configurar credentials/token no banco.
+-- Amazonas Energia: use make setup-amazonas-energia para configurar token (luz).
+
+-- Sequences
+CREATE SEQUENCE IF NOT EXISTS amazonas_energia_token_id_seq;
+
+-- Table Definition
+CREATE TABLE IF NOT EXISTS "public"."amazonas_energia_token" (
+    "id" int4 NOT NULL DEFAULT nextval('amazonas_energia_token_id_seq'::regclass),
+    "auth_header" text NOT NULL,
+    "unit_id" varchar(20) NOT NULL,
+    "updated_at" timestamp NOT NULL,
+    PRIMARY KEY ("id")
+);
+
+-- Sequences
+CREATE SEQUENCE IF NOT EXISTS faturas_luz_id_seq;
+
+-- Table Definition
+CREATE TABLE IF NOT EXISTS "public"."faturas_luz" (
+    "id" int4 NOT NULL DEFAULT nextval('faturas_luz_id_seq'::regclass),
+    "unit_id" varchar(20) NOT NULL,
+    "ano" int4 NOT NULL,
+    "mes" int4 NOT NULL,
+    "data_json" text NOT NULL,
+    "created_at" timestamp NOT NULL,
+    PRIMARY KEY ("id"),
+    CONSTRAINT uq_faturas_luz_unit_ano_mes UNIQUE (unit_id, ano, mes)
+);
+
+-- Para tabelas já existentes sem a constraint:
+-- ALTER TABLE faturas_luz ADD CONSTRAINT uq_faturas_luz_unit_ano_mes UNIQUE (unit_id, ano, mes);
 

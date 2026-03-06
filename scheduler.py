@@ -25,7 +25,7 @@ _scheduler: BackgroundScheduler | None = None
 
 
 def _run_sync_job() -> dict:
-    """Executa job de sincronização via use case."""
+    """Executa job de sincronização Águas (água) via use case."""
     from atlasfetch.api.container import get_config, _create_sincronizar_debitos
 
     config = get_config()
@@ -44,13 +44,47 @@ def _run_sync_job() -> dict:
     )
 
 
-def _scheduled_task():
-    """Tarefa executada pelo scheduler."""
+def _run_amazonas_energia_job() -> dict:
+    """Executa job Amazonas Energia (luz) - usa token salvo, salva no banco."""
+    from atlasfetch.infrastructure.external.scrapers.amazonas_energia import (
+        sync_and_save_luz,
+    )
+
+    return sync_and_save_luz()
+
+
+def _scheduled_task_aguas():
+    """Tarefa Águas (água)."""
     try:
         result = _run_sync_job()
-        logger.info("Scheduler: job executado com sucesso - %s", result)
+        logger.info("Scheduler [água]: job executado - %s", result)
     except Exception as e:
-        logger.exception("Scheduler: erro ao executar job - %s", e)
+        logger.exception("Scheduler [água]: erro - %s", e)
+
+
+def _scheduled_task_amazonas_energia():
+    """Tarefa Amazonas Energia (luz) - usa token salvo."""
+    try:
+        result = _run_amazonas_energia_job()
+        logger.info("Scheduler [luz]: consumos obtidos - %s", result)
+    except Exception as e:
+        logger.exception("Scheduler [luz]: erro - %s", e)
+
+
+def _run_educadventista_job() -> dict:
+    """Executa job Educação Adventista (escola) - login e salva parcelas."""
+    from atlasfetch.infrastructure.external.scrapers.educadventista import sync_and_save_escola
+
+    return sync_and_save_escola()
+
+
+def _scheduled_task_educadventista():
+    """Tarefa Educação Adventista (parcelas escolares)."""
+    try:
+        result = _run_educadventista_job()
+        logger.info("Scheduler [escola]: parcelas obtidas - %s", result)
+    except Exception as e:
+        logger.exception("Scheduler [escola]: erro - %s", e)
 
 
 def _parse_cron(expr: str) -> dict:
@@ -111,10 +145,52 @@ def start_scheduler() -> bool:
         desc = "6:00 diário (padrão)"
 
     _scheduler = BackgroundScheduler()
-    _scheduler.add_job(_scheduled_task, trigger, id="sync_debitos")
+
+    # Job Águas (água) - SCHEDULER_AGUAS_ENABLED=1 e SCHEDULER_CRON
+    aguas_enabled = os.environ.get("SCHEDULER_AGUAS_ENABLED", "1").strip() == "1"
+    if aguas_enabled:
+        _scheduler.add_job(_scheduled_task_aguas, trigger, id="sync_aguas")
+        logger.info("Job Águas (água) agendado: %s", desc)
+    else:
+        logger.info("Job Águas (água) desabilitado (SCHEDULER_AGUAS_ENABLED != 1)")
+
+    # Job Amazonas Energia (luz) - SCHEDULER_AMAZONAS_ENERGIA_CRON
+    ae_enabled = os.environ.get("SCHEDULER_AMAZONAS_ENERGIA_ENABLED", "").strip() == "1"
+    ae_cron = os.environ.get("SCHEDULER_AMAZONAS_ENERGIA_CRON", "").strip()
+    if ae_enabled and ae_cron:
+        try:
+            ae_trigger = CronTrigger(**_parse_cron(ae_cron))
+            _scheduler.add_job(
+                _scheduled_task_amazonas_energia,
+                ae_trigger,
+                id="sync_amazonas_energia",
+            )
+            logger.info("Job Amazonas Energia (luz) agendado: cron=%s", ae_cron)
+        except ValueError as e:
+            logger.warning("SCHEDULER_AMAZONAS_ENERGIA_CRON inválido: %s", e)
+    elif ae_enabled:
+        logger.warning(
+            "SCHEDULER_AMAZONAS_ENERGIA_ENABLED=1 mas SCHEDULER_AMAZONAS_ENERGIA_CRON vazio"
+        )
+
+    # Job Educação Adventista (escola) - SCHEDULER_EDUCADVENTISTA_CRON
+    ea_enabled = os.environ.get("SCHEDULER_EDUCADVENTISTA_ENABLED", "").strip() == "1"
+    ea_cron = os.environ.get("SCHEDULER_EDUCADVENTISTA_CRON", "").strip()
+    if ea_enabled and ea_cron:
+        try:
+            ea_trigger = CronTrigger(**_parse_cron(ea_cron))
+            _scheduler.add_job(
+                _scheduled_task_educadventista,
+                ea_trigger,
+                id="sync_educadventista",
+            )
+            logger.info("Job Educação Adventista (escola) agendado: cron=%s", ea_cron)
+        except ValueError as e:
+            logger.warning("SCHEDULER_EDUCADVENTISTA_CRON inválido: %s", e)
+
     _scheduler.start()
 
-    logger.info("Scheduler iniciado - execução: %s", desc)
+    logger.info("Scheduler iniciado")
     return True
 
 

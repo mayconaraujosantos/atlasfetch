@@ -1,0 +1,2 @@
+[console_scripts]
+atlasfetch = atlasfetch.cli.main:main
