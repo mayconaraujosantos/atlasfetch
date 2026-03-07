@@ -6,7 +6,7 @@ SQLite por padrão. DATABASE_URL no .env (ex.: sqlite:///atlasfetch.db).
 import json
 import os
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 
 from dotenv import load_dotenv
 from sqlalchemy import (
@@ -38,6 +38,11 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+def _utcnow() -> datetime:
+    """Retorna datetime UTC sem timezone para manter compatibilidade com colunas atuais."""
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -59,7 +64,7 @@ class Consulta(Base):
     ano_filtro: Mapped[int] = mapped_column(Integer, index=True)
     mes_filtro: Mapped[int] = mapped_column(Integer, index=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     debitos: Mapped[list["Debito"]] = relationship(
         back_populates="consulta", cascade="all, delete-orphan"
@@ -89,7 +94,7 @@ class Debito(Base):
     codigo_pix: Mapped[str] = mapped_column(Text)
     contrato_encerrado: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     consulta: Mapped["Consulta"] = relationship(back_populates="debitos")
 
@@ -103,7 +108,7 @@ class GmailOAuthConfig(Base):
     credentials_json: Mapped[str] = mapped_column(Text, nullable=True)
     token_json: Mapped[str] = mapped_column(Text, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow, onupdate=_utcnow
     )
 
 
@@ -116,7 +121,7 @@ class AmazonasEnergiaToken(Base):
     auth_header: Mapped[str] = mapped_column(Text)
     unit_id: Mapped[str] = mapped_column(String(20))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow, onupdate=_utcnow
     )
 
 
@@ -131,7 +136,7 @@ class FaturaLuz(Base):
     ano: Mapped[int] = mapped_column(Integer, index=True)
     mes: Mapped[int] = mapped_column(Integer, index=True)
     data_json: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
 
 class FaturaLuzAberta(Base):
@@ -158,7 +163,7 @@ class FaturaLuzAberta(Base):
     descricao_situacao: Mapped[str | None] = mapped_column(String(50), nullable=True)
     vencida: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     payload_json: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
 
 class FaturaEscola(Base):
@@ -177,7 +182,7 @@ class FaturaEscola(Base):
     nome_aluno: Mapped[str] = mapped_column(String(200), index=True)
     ano: Mapped[int] = mapped_column(Integer, index=True)
     mes: Mapped[int] = mapped_column(Integer, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
     valor: Mapped[float | None] = mapped_column(Float, nullable=True)
     data_validade_pix: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status_pix: Mapped[str | None] = mapped_column(String(20), nullable=True)  # ativo | expirado
