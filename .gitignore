@@ -23,6 +23,10 @@ env/
 # Debug (screenshots de falha)
 debug/
 
+# Coverage
+.coverage
+.coverage.*
+
 # IDE
 .idea/
 .vscode/

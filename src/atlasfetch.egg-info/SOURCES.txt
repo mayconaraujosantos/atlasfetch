@@ -1,4 +1,4 @@
-FLUXO.md
+README.md
 pyproject.toml
 src/atlasfetch/__init__.py
 src/atlasfetch.egg-info/PKG-INFO
@@ -35,10 +35,12 @@ src/atlasfetch/infrastructure/external/b2c_auth_adapter.py
 src/atlasfetch/infrastructure/external/email_reader.py
 src/atlasfetch/infrastructure/external/gmail_oauth.py
 src/atlasfetch/infrastructure/external/http_headers.py
+src/atlasfetch/infrastructure/external/recaptcha_solver.py
 src/atlasfetch/infrastructure/external/scrapers/__init__.py
 src/atlasfetch/infrastructure/external/scrapers/aguas_manaus.py
 src/atlasfetch/infrastructure/external/scrapers/amazonas_energia.py
 src/atlasfetch/infrastructure/external/scrapers/base.py
+src/atlasfetch/infrastructure/external/scrapers/educadventista.py
 src/atlasfetch/infrastructure/persistence/__init__.py
 src/atlasfetch/infrastructure/persistence/database.py
 src/atlasfetch/infrastructure/persistence/sqlalchemy_repository.py

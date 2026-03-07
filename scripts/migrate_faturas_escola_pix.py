@@ -17,12 +17,16 @@ load_dotenv()
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///atlasfetch.db")
 is_sqlite = "sqlite" in DATABASE_URL
 
+VARCHAR_200 = "VARCHAR(200)"
+VARCHAR_50 = "VARCHAR(50)"
+VARCHAR_20 = "VARCHAR(20)"
+
 # Colunas a adicionar
 COLUMNS = [
     ("valor", "REAL"),
-    ("nome_aluno", "VARCHAR(200)"),
-    ("data_validade_pix", "VARCHAR(50)"),
-    ("status_pix", "VARCHAR(20)"),
+    ("nome_aluno", VARCHAR_200),
+    ("data_validade_pix", VARCHAR_50),
+    ("status_pix", VARCHAR_20),
     ("codigo_pix", "TEXT"),
     ("qrcode_base64", "TEXT"),
 ]
@@ -30,9 +34,9 @@ COLUMNS = [
 # PostgreSQL usa tipos diferentes
 PG_TYPES = {
     "REAL": "DOUBLE PRECISION",
-    "VARCHAR(200)": "VARCHAR(200)",
-    "VARCHAR(50)": "VARCHAR(50)",
-    "VARCHAR(20)": "VARCHAR(20)",
+    VARCHAR_200: VARCHAR_200,
+    VARCHAR_50: VARCHAR_50,
+    VARCHAR_20: VARCHAR_20,
     "TEXT": "TEXT",
 }
 
