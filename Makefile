@@ -8,7 +8,7 @@ PY = $(BIN)/python
 PIP = $(BIN)/pip
 UVICORN = $(BIN)/uvicorn
 
-.PHONY: help install venv setup api run sync scheduler setup-gmail setup-amazonas-energia fetch-amazonas-faturas-abertas migrate-gmail db-migrate-faturas-luz db-migrate-faturas-luz-abertas db-migrate-faturas-escola-pix db-migrate-faturas-escola-remove-student-id playwright-install test clean db db-init
+.PHONY: help install install-dev venv setup api run sync scheduler setup-gmail setup-amazonas-energia fetch-amazonas-faturas-abertas migrate-gmail db-migrate-faturas-luz db-migrate-faturas-luz-abertas db-migrate-faturas-escola-pix db-migrate-faturas-escola-remove-student-id playwright-install test test-cov test-api clean db db-init
 
 help:
 	@echo "Atlasfetch - Comandos disponíveis:"
@@ -32,7 +32,9 @@ help:
 	@echo "  make fetch-amazonas-faturas-abertas  Login + GET /api/faturas/abertas"
 	@echo "  make migrate-gmail         Migra credentials/token dos arquivos para o banco"
 	@echo "  make playwright-install   Instala navegadores do Playwright"
-	@echo "  make test                  Testa API via curl (requer API rodando)"
+	@echo "  make test                  Executa suíte automatizada com pytest"
+	@echo "  make test-cov              Executa suíte com relatório de cobertura"
+	@echo "  make test-api              Testa API via curl (requer API rodando)"
 	@echo "  make clean                 Remove __pycache__, .pyc, etc."
 	@echo ""
 
@@ -44,6 +46,11 @@ install:
 	@test -d $(VENV) || (echo "Execute 'make venv' primeiro." && exit 1)
 	$(PIP) install -r requirements.txt
 	@echo "Dependências instaladas."
+
+install-dev:
+	@test -d $(VENV) || (echo "Execute 'make venv' primeiro." && exit 1)
+	$(PIP) install -r requirements-dev.txt
+	@echo "Dependências de desenvolvimento instaladas."
 
 setup: venv install
 	@echo "Setup concluído. Ative o venv: source $(VENV)/bin/activate"
@@ -101,6 +108,14 @@ playwright-install:
 	$(BIN)/playwright install chromium
 
 test:
+	@test -d $(VENV) || (echo "Execute 'make venv' primeiro." && exit 1)
+	$(PY) -m pytest
+
+test-cov:
+	@test -d $(VENV) || (echo "Execute 'make venv' primeiro." && exit 1)
+	$(PY) -m pytest --cov=src/atlasfetch --cov-report=term-missing
+
+test-api:
 	@bash scripts/test_api.sh
 
 clean:

@@ -1,0 +1,516 @@
+{
+  "info": {
+    "_postman_id": "5c0c9ab6-f2d5-4a57-8d7a-2a65b1388e90",
+    "name": "Atlasfetch API",
+    "description": "Collection Postman para testar a API Atlasfetch localmente ou em produção. Inclui healthcheck, listagem de faturas, detalhes por provedor, listagem escolar e sincronização manual.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "ano",
+      "value": "2026",
+      "type": "string"
+    },
+    {
+      "key": "mes",
+      "value": "3",
+      "type": "string"
+    },
+    {
+      "key": "limit",
+      "value": "100",
+      "type": "string"
+    },
+    {
+      "key": "provedor",
+      "value": "aguas",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('body contem status ok', function () {",
+                  "  var body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Verifica se a API está no ar."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Faturas",
+      "item": [
+        {
+          "name": "GET /api/faturas?provedor=aguas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas?provedor=aguas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "aguas"
+                }
+              ]
+            },
+            "description": "Lista períodos disponíveis de água."
+          }
+        },
+        {
+          "name": "GET /api/faturas?provedor=luz",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas?provedor=luz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "luz"
+                }
+              ]
+            },
+            "description": "Lista períodos disponíveis de luz."
+          }
+        },
+        {
+          "name": "GET /api/faturas?provedor=escola",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas?provedor=escola",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "escola"
+                }
+              ]
+            },
+            "description": "Lista períodos disponíveis de parcelas escolares."
+          }
+        },
+        {
+          "name": "GET /api/faturas?provedor=todos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas?provedor=todos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "todos"
+                }
+              ]
+            },
+            "description": "Lista os períodos disponíveis de todos os provedores."
+          }
+        },
+        {
+          "name": "GET /api/faturas/escola",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas/escola?ano={{ano}}&mes={{mes}}&limit={{limit}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas",
+                "escola"
+              ],
+              "query": [
+                {
+                  "key": "ano",
+                  "value": "{{ano}}"
+                },
+                {
+                  "key": "mes",
+                  "value": "{{mes}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "{{limit}}"
+                }
+              ]
+            },
+            "description": "Lista registros persistidos de faturas escolares com dados PIX."
+          }
+        },
+        {
+          "name": "GET /api/faturas/{ano}/{mes}?provedor=aguas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas/{{ano}}/{{mes}}?provedor=aguas&atualizar=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas",
+                "{{ano}}",
+                "{{mes}}"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "aguas"
+                },
+                {
+                  "key": "atualizar",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Busca a fatura de água persistida no banco para o período informado."
+          }
+        },
+        {
+          "name": "GET /api/faturas/{ano}/{mes}?provedor=aguas&atualizar=true",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas/{{ano}}/{{mes}}?provedor=aguas&atualizar=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas",
+                "{{ano}}",
+                "{{mes}}"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "aguas"
+                },
+                {
+                  "key": "atualizar",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Força login e nova busca de água antes de responder. Requer credenciais AGUAS_* configuradas."
+          }
+        },
+        {
+          "name": "GET /api/faturas/{ano}/{mes}?provedor=luz",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas/{{ano}}/{{mes}}?provedor=luz&atualizar=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas",
+                "{{ano}}",
+                "{{mes}}"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "luz"
+                },
+                {
+                  "key": "atualizar",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Busca a fatura de luz persistida no banco para o período informado."
+          }
+        },
+        {
+          "name": "GET /api/faturas/{ano}/{mes}?provedor=luz&atualizar=true",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas/{{ano}}/{{mes}}?provedor=luz&atualizar=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas",
+                "{{ano}}",
+                "{{mes}}"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "luz"
+                },
+                {
+                  "key": "atualizar",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Executa sincronização de luz antes de buscar o período no banco."
+          }
+        },
+        {
+          "name": "GET /api/faturas/{ano}/{mes}?provedor=escola",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas/{{ano}}/{{mes}}?provedor=escola&atualizar=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas",
+                "{{ano}}",
+                "{{mes}}"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "escola"
+                },
+                {
+                  "key": "atualizar",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Busca a parcela escolar persistida no banco para o período informado."
+          }
+        },
+        {
+          "name": "GET /api/faturas/{ano}/{mes}?provedor=escola&atualizar=true",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas/{{ano}}/{{mes}}?provedor=escola&atualizar=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas",
+                "{{ano}}",
+                "{{mes}}"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "escola"
+                },
+                {
+                  "key": "atualizar",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Executa sincronização escolar antes de buscar o período no banco."
+          }
+        },
+        {
+          "name": "GET /api/faturas/{ano}/{mes}/historico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faturas/{{ano}}/{{mes}}/historico",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "faturas",
+                "{{ano}}",
+                "{{mes}}",
+                "historico"
+              ]
+            },
+            "description": "Endpoint legado de histórico, mantido por compatibilidade."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sync",
+      "item": [
+        {
+          "name": "POST /api/sync/run?provedor=aguas",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sync/run?provedor=aguas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sync",
+                "run"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "aguas"
+                }
+              ]
+            },
+            "description": "Executa sincronização imediata apenas de água."
+          }
+        },
+        {
+          "name": "POST /api/sync/run?provedor=luz",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sync/run?provedor=luz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sync",
+                "run"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "luz"
+                }
+              ]
+            },
+            "description": "Executa sincronização imediata apenas de luz."
+          }
+        },
+        {
+          "name": "POST /api/sync/run?provedor=escola",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sync/run?provedor=escola",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sync",
+                "run"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "escola"
+                }
+              ]
+            },
+            "description": "Executa sincronização imediata apenas das parcelas escolares."
+          }
+        },
+        {
+          "name": "POST /api/sync/run?provedor=todos",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sync/run?provedor=todos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sync",
+                "run"
+              ],
+              "query": [
+                {
+                  "key": "provedor",
+                  "value": "todos"
+                }
+              ]
+            },
+            "description": "Executa sincronização de água, luz e escola em sequência."
+          }
+        }
+      ]
+    }
+  ]
+}
